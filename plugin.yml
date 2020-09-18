@@ -1,0 +1,7 @@
+name: HorseShop
+main: urbodus\horses\HorseShop
+version: 1.0-beta
+authors:
+  - LiTEK
+  - Josewowgame
+api: 3.0.0
