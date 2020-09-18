@@ -2,6 +2,6 @@
 Horses Shop for HispanoCraft
 
 ## Features
-Horse mounting
-Wearable armors
-Sellable horses
+- Horse mounting
+- Wearable armors
+- Sellable horses
