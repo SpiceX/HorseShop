@@ -20,9 +20,12 @@ use pocketmine\level\Level;
 use pocketmine\level\particle\HeartParticle;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\protocol\MobArmorEquipmentPacket;
 use pocketmine\network\mcpe\protocol\SetActorLinkPacket;
 use pocketmine\network\mcpe\protocol\types\EntityLink;
 use pocketmine\Player;
+use pocketmine\Server;
+use pocketmine\utils\TextFormat;
 use urbodus\horses\entity\util\Calculator;
 use urbodus\horses\HorseShop;
 
@@ -49,8 +52,6 @@ abstract class BaseCreature extends Creature implements Rideable
     protected $follow_range_sq = 1.2;
     /** @var int */
     protected $waitingTime = 0;
-    /** @var string */
-    protected $creatureName = "";
     /** @var Player|null */
     protected $rider;
     /** @var Vector3 */
@@ -93,6 +94,8 @@ abstract class BaseCreature extends Creature implements Rideable
     private $positionSeekTick = 60;
     /** @var float */
     private $maxSize = 10.0;
+    /** @var Item */
+    private $armor;
 
     public function __construct(Level $level, CompoundTag $nbt)
     {
@@ -113,7 +116,7 @@ abstract class BaseCreature extends Creature implements Rideable
      */
     public function getLoader(): ?HorseShop
     {
-        $plugin = $this->server->getPluginManager()->getPlugin("HorseShop");
+        $plugin = Server::getInstance()->getPluginManager()->getPlugin("HorseShop");
         if ($plugin instanceof HorseShop) {
             return $plugin;
         }
@@ -212,6 +215,31 @@ abstract class BaseCreature extends Creature implements Rideable
         return $this->visibility;
     }
 
+    /**
+     * @return Item
+     */
+    public function getArmor(): Item
+    {
+        return $this->armor;
+    }
+
+    /**
+     * @param Item $armor
+     */
+    public function setArmor(Item $armor): void
+    {
+        $this->armor = $armor;
+        $pk = new MobArmorEquipmentPacket();
+        $pk->entityRuntimeId = $this->getId();
+        $pk->chest = $armor;
+        $pk->legs = Item::get(Item::AIR);
+        $pk->head = Item::get(Item::AIR);
+        $pk->feet = Item::get(Item::AIR);
+        foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
+            $onlinePlayer->dataPacket($pk);
+        }
+    }
+
     public function setImmobile(bool $value = true): void
     {
         if (!$this->visibility && $value) {
@@ -247,7 +275,7 @@ abstract class BaseCreature extends Creature implements Rideable
      */
     public function getCreatureName(): string
     {
-        return $this->creatureName;
+        return "";
     }
 
     /**
@@ -288,6 +316,34 @@ abstract class BaseCreature extends Creature implements Rideable
                     }
                 }
             }
+            if($player instanceof Player && !$player->isSneaking() && $this->canBeRidden && $player->getName() === $this->getCreatureOwnerName()) {
+                $item = $player->getInventory()->getItemInHand();
+                if($item->getId() === Item::SADDLE) {
+                    $this->setRider($player);
+                    $player->sendTip(TextFormat::GRAY . "Sneak to dismount...");
+                    $source->setCancelled();
+                }
+                if ($item->getId() === Item::HORSE_ARMOR_LEATHER){
+                    $this->setArmor(Item::get(Item::HORSE_ARMOR_LEATHER));
+                    $player->getInventory()->setItemInHand(Item::get(Item::AIR));
+                    $source->setCancelled();
+                }
+                if ($item->getId() === Item::HORSE_ARMOR_GOLD){
+                    $this->setArmor(Item::get(Item::HORSE_ARMOR_GOLD));
+                    $player->getInventory()->setItemInHand(Item::get(Item::AIR));
+                    $source->setCancelled();
+                }
+                if ($item->getId() === Item::HORSE_ARMOR_IRON){
+                    $this->setArmor(Item::get(Item::HORSE_ARMOR_IRON));
+                    $player->getInventory()->setItemInHand(Item::get(Item::AIR));
+                    $source->setCancelled();
+                }
+                if ($item->getId() === Item::HORSE_ARMOR_DIAMOND){
+                    $this->setArmor(Item::get(Item::HORSE_ARMOR_DIAMOND));
+                    $player->getInventory()->setItemInHand(Item::get(Item::AIR));
+                    $source->setCancelled();
+                }
+            }
         }
         parent::attack($source);
     }
@@ -317,14 +373,13 @@ abstract class BaseCreature extends Creature implements Rideable
      */
     public function getNameTag(): string
     {
-        return $this->getCreatureName();
+        return "";
     }
 
     protected function initEntity(): void
     {
         parent::initEntity();
 
-        $this->creatureName = $this->namedtag->getString("creatureName");
         $this->scale = $this->namedtag->getFloat("scale", $this->getScale());
         $this->setGenericFlag(self::DATA_FLAG_CHESTED, (bool)$this->namedtag->getByte("chested", 0));
         $this->setGenericFlag(self::DATA_FLAG_BABY, (bool)$this->namedtag->getByte("isBaby", 0));
@@ -339,7 +394,7 @@ abstract class BaseCreature extends Creature implements Rideable
 
         $this->spawnToAll();
 
-        $this->getAttributeMap()->addAttribute(Attribute::getAttribute(20));
+        $this->getAttributeMap()->addAttribute(Attribute::getAttribute(Attribute::FOLLOW_RANGE));
         $this->setCanSaveWithChunk(false);
 
         $this->generateCustomCreatureData();

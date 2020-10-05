@@ -22,9 +22,11 @@ class Horse extends WalkingCreature {
     public const COLOR_GRAY = 5, COLOUR_GRAY = 5;
     public const COLOR_DARKBROWN = 6, COLOUR_DARKBROWN = 6;
 
+    /** @var string */
     public $name = "Horse";
-
+    /** @var float */
     public $width = 1.3965;
+    /** @var float */
     public $height = 1.6;
 
     public function generateCustomCreatureData(): void {

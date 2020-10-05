@@ -1,0 +1,11 @@
+# !-- Configuration file for HorseShop,a plugin by LiTEK & Josewowgame2888 for HispanoCraft
+
+# Price of each horse
+price_per_horse: 5000
+
+# Price for armors
+armor_prices:
+  leather_armor: 1000
+  gold_armor: 2000
+  iron_armor: 3000
+  diamond_armor: 4000
